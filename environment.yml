@@ -1,0 +1,7 @@
+name: sgd_chromosomal_features
+channels:
+  - defaults
+dependencies:
+  - python>=3
+  - pip:
+    - intermine
