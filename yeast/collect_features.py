@@ -56,7 +56,7 @@ def fetch_from_sgd() -> dict:
     return genes
 
 
-if __name__ == '__main__':
+def main():
     import argparse
     import sys
 
@@ -82,3 +82,7 @@ if __name__ == '__main__':
         ]
 
         args.output.write('\t'.join(output_row) + '\n')
+
+
+if __name__ == '__main__':
+    main()
