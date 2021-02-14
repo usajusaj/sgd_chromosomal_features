@@ -1,6 +1,9 @@
 #!/usr/bin/env python
+import logging
 
 from intermine.webservice import Service
+
+logger = logging.getLogger(__name__)
 
 
 def fetch_from_sgd() -> dict:
@@ -11,17 +14,21 @@ def fetch_from_sgd() -> dict:
 
     :rtype: dict
     """
-    service = Service("https://yeastmine.yeastgenome.org:443/yeastmine/service")
+    service = Service("https://yeastmine.yeastgenome.org/yeastmine/service")
+
     query = service.new_query("Gene")
     query.add_view(
         "primaryIdentifier", "featureType", "qualifier", "secondaryIdentifier",
         "symbol", "chromosomeLocation.start", "chromosomeLocation.end",
         "description", "synonyms.value"
     )
-    query.add_constraint("Gene", "IN", "ALL_Verified_Uncharacterized_Dubious_ORFs", code="A")
+
+    query.add_constraint("organism.shortName", "=", "S. cerevisiae", code="A")
+    query.add_constraint("featureType", "=", "ORF", code="C")
 
     genes = {}
 
+    logger.debug("Executing query on yeastmine")
     for row in query.rows():
         sgd_id = row["primaryIdentifier"]
         orf = row["secondaryIdentifier"]
@@ -36,6 +43,7 @@ def fetch_from_sgd() -> dict:
                 orfnum = -orfnum
 
         if sgd_id not in genes:
+            logger.debug(f"Parsing new ORF: {orf}")
             genes[sgd_id] = {
                 'sgd_id': row["primaryIdentifier"],
                 'feature_qualifier': row["qualifier"],
