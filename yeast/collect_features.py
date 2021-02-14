@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import logging
+import re
 
 from intermine.webservice import Service
 
@@ -14,6 +15,8 @@ def fetch_from_sgd() -> dict:
 
     :rtype: dict
     """
+    re_num = re.compile(r'(\d+)')
+
     service = Service("https://yeastmine.yeastgenome.org/yeastmine/service")
 
     query = service.new_query("Gene")
@@ -33,12 +36,16 @@ def fetch_from_sgd() -> dict:
         sgd_id = row["primaryIdentifier"]
         orf = row["secondaryIdentifier"]
 
+        orfnum = re_num.findall(orf)
+        if orfnum:
+            orfnum = int(orfnum[0])
+        else:
+            orfnum = 0
+
         if orf.startswith('Q'):
             chrom = 0
-            orfnum = int(orf[1:])
         else:
             chrom = ord(orf[1]) - 64
-            orfnum = int(orf[3:6])
             if orf[2] == 'L':
                 orfnum = -orfnum
 
@@ -75,11 +82,11 @@ def main():
 
     features = fetch_from_sgd()
 
-    for sgdid, gene in features.items():
+    for sgdid, gene in sorted(features.items(), key=lambda x: (x[1]['chromosome'], x[1]['chromosomal_location'])):
         output_row = [
             sgdid,
-            gene['feature_type'],
-            gene['feature_qualifier'],
+            gene['feature_type'] or '',
+            gene['feature_qualifier'] or '',
             gene['orf'],
             gene['name'] or '',
             str(gene['chromosome']),
